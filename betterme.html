@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Better Self AI</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f3f5f9;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.container{
+width:420px;
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+#chat{
+height:300px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+margin-bottom:10px;
+}
+
+.user{color:blue;}
+.bot{color:green;}
+.loading{color:orange;}
+.error{color:red;}
+
+input{
+width:75%;
+padding:8px;
+}
+
+button{
+padding:8px 12px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>My Better Self</h2>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Talk to your better self">
+<button onclick="send()">Send</button>
+
+</div>
+
+<script>
+
+const API_KEY = "YOUR API KEY";
+
+async function send(){
+
+const input = document.getElementById("msg");
+const chat = document.getElementById("chat");
+
+const message = input.value;
+
+if(!message) return;
+
+chat.innerHTML += `<p class="user"><b>You:</b> ${message}</p>`;
+
+input.value = "";
+
+chat.innerHTML += `<p class="loading" id="loading">Thinking...</p>`;
+
+try{
+
+const prompt = `
+You are the user's stronger inner voice.
+
+Personality:
+- emotional but disciplined
+- empathetic but logical
+- motivating but honest
+- speaks casually like a friend
+
+Help the user stop procrastinating, stay focused, and make good decisions.
+`;
+
+const response = await fetch(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+contents:[
+{
+parts:[
+{ text: prompt + "\nUser: " + message }
+]
+}
+]
+})
+}
+);
+
+const data = await response.json();
+
+console.log(data); // Debugging
+
+document.getElementById("loading")?.remove();
+
+let reply = "AI could not generate a response.";
+
+if(data.error){
+reply = "API Error: " + data.error.message;
+}
+
+else if(
+data.candidates &&
+data.candidates.length > 0 &&
+data.candidates[0].content &&
+data.candidates[0].content.parts &&
+data.candidates[0].content.parts.length > 0
+){
+reply = data.candidates[0].content.parts[0].text;
+}
+
+chat.innerHTML += `<p class="bot"><b>Better You:</b> ${reply}</p>`;
+
+chat.scrollTop = chat.scrollHeight;
+
+}
+
+catch(error){
+
+document.getElementById("loading")?.remove();
+
+chat.innerHTML += `<p class="error">Error connecting to AI</p>`;
+
+console.error(error);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
